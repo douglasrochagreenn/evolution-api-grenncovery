@@ -19,21 +19,21 @@ cd evolution-api
 
 Na raiz do projeto, crie um arquivo .env (ou copie o modelo .env.example se disponível) com as seguintes chaves mínimas:
 
-###### Tipo de banco de dados suportado: postgresql ou mysql
+### Tipo de banco de dados suportado: postgresql ou mysql
 DATABASE_PROVIDER=postgresql
 
-###### String de conexão ao banco Postgres (serviço definido no Compose como "postgres")
+### String de conexão ao banco Postgres (serviço definido no Compose como "postgres")
 DATABASE_CONNECTION_URI=postgresql://user:pass@postgres:5432/evolution?schema=public
 
-###### Chave de API global para o Manager UI e chamadas HTTP
+### Chave de API global para o Manager UI e chamadas HTTP
 AUTHENTICATION_API_KEY=minha-chave-secreta-aqui
 
-###### Redis (cache) - serviço definido no Compose como "redis"
+### Redis (cache) - serviço definido no Compose como "redis"
 CACHE_REDIS_ENABLED=true
 CACHE_REDIS_URI=redis://redis:6379/6
 CACHE_LOCAL_ENABLED=false
 
-###### Outras variáveis (opcionais) podem ser mantidas nos valores padrão
+### Outras variáveis (opcionais) podem ser mantidas nos valores padrão
 
 Importante: o hostname postgres e redis devem corresponder aos nomes dos serviços no seu docker-compose.yml.
 
