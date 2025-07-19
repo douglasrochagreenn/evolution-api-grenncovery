@@ -33,7 +33,7 @@ CACHE_LOCAL_ENABLED=false
 ## Subir os containers
 
 ```bash
-docker compose -f docker-compose.dev.yaml up -d --build
+docker compose -f docker-compose.yaml up -d --build
 ```
 
 Este comando irá:
@@ -50,22 +50,18 @@ Este comando irá:
 Para checar se está tudo funcionando:
 
 ```bash
-docker compose -f docker-compose.dev.yaml ps
-```
-
-```bash
 docker logs -f evolution_api
 ```
 
 ```bash
-curl -i http://localhost:8080/health
+curl -i {{ seu_link }}/health
 ```
 
 ## Acessar o Manager UI
 
-Abra no navegador: `http://localhost:8080/manager`
+Abra no navegador: `{{ seu_link }}/manager`
 
-* **Server URL**: `http://localhost:8080`
+* **Server URL**: `{{ seu_link }}`
 * **API Key Global**: cole o valor de `AUTHENTICATION_API_KEY`
 
 Clique em **Instance +** para criar e conectar uma instância de WhatsApp.
@@ -75,14 +71,14 @@ Clique em **Instance +** para criar e conectar uma instância de WhatsApp.
 1. Liste instâncias para obter o `instanceId`:
 
    ```bash
-   curl -s http://localhost:8080/instances \
+   curl -s {{ seu_link }}/instances \
      -H "x-api-key: $AUTHENTICATION_API_KEY" | jq
    ```
 2. Formate o destino (ex.: `5511987654321@c.us`).
 3. Envie a mensagem:
 
    ```bash
-   curl -X POST http://localhost:8080/instances/<INSTANCE_ID>/send-message \
+   curl -X POST {{ seu_link }}/instances/<INSTANCE_ID>/send-message \
      -H "Content-Type: application/json" \
      -H "x-api-key: $AUTHENTICATION_API_KEY" \
      -d '{"to":"5511987654321@c.us","message":"Olá! Esta é uma mensagem de teste."}'
@@ -100,9 +96,16 @@ docker logs -f evolution\_api
 ## Parar e limpar tudo
 
 ```bash
-docker compose -f docker-compose.dev.yaml down --volumes --remove-orphans
+docker compose -f docker-compose.yaml down --volumes --remove-orphans
 ````
 
 ## Troubleshooting
 
-* Se aparecer erro `@prisma/client did not initialize`, garanta q
+* Se aparecer erro `@prisma/client did not initialize`, garanta que o Dockerfile roda `prisma generate` antes de iniciar ou adicione `prestart` no `package.json`.
+* Se `Redis disconnected`, verifique `CACHE_REDIS_URI` aponta para `redis://redis:6379`, não para `{{ seu_link }}`.
+* Se tiver permissão no Postgres, use `POSTGRES_HOST_AUTH_METHOD=trust` em dev.
+* Em produção, defina `AUTHENTICATION_API_KEY` com uma string forte.
+
+---
+
+Agora sua Evolution API deve estar funcionando plenamente via Docker, incluindo o envio de mensagens pelo WhatsApp!
