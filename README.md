@@ -1,117 +1,108 @@
-Evolution API (Docker)
+# Evolution API (Docker)
 
 Este documento descreve o que você precisa e como rodar a Evolution API usando Docker e Docker Compose.
 
-Pré-requisitos
+## Pré-requisitos
 
-Docker (versão ≥ 20.10)
+* **Docker** (versão ≥ 20.10)
+* **Docker Compose** (versão ≥ 1.29)
+* **Git** (para clonar este repositório)
 
-Docker Compose (versão ≥ 1.29)
+## Clonar o repositório
 
-Git (para clonar este repositório)
-
-1. Clonar o repositório
-
+```bash
 git clone <url-do-seu-repo> evolution-api
 cd evolution-api
+```
 
-2. Configurar variáveis de ambiente
+## Configurar variáveis de ambiente
 
-Na raiz do projeto, crie um arquivo .env (ou copie o modelo .env.example se disponível) com as seguintes chaves mínimas:
+Na raiz do projeto, crie um arquivo `.env` (ou copie o modelo `.env.example` se disponível) com as seguintes chaves mínimas:
 
-### Tipo de banco de dados suportado: postgresql ou mysql
+```dotenv
 DATABASE_PROVIDER=postgresql
-
-### String de conexão ao banco Postgres (serviço definido no Compose como "postgres")
 DATABASE_CONNECTION_URI=postgresql://user:pass@postgres:5432/evolution?schema=public
-
-### Chave de API global para o Manager UI e chamadas HTTP
 AUTHENTICATION_API_KEY=minha-chave-secreta-aqui
-
-### Redis (cache) - serviço definido no Compose como "redis"
 CACHE_REDIS_ENABLED=true
 CACHE_REDIS_URI=redis://redis:6379/6
 CACHE_LOCAL_ENABLED=false
+```
 
-### Outras variáveis (opcionais) podem ser mantidas nos valores padrão
+> **Importante:** os hostnames `postgres` e `redis` devem corresponder aos serviços no `docker-compose.yml`.
 
-Importante: o hostname postgres e redis devem corresponder aos nomes dos serviços no seu docker-compose.yml.
+## Subir os containers
 
-3. Subir os containers
-
-Use Docker Compose para buildar e iniciar os serviços:
-
+```bash
 docker compose -f docker-compose.dev.yaml up -d --build
+```
 
-Isso irá:
+Este comando irá:
 
-Buildar a imagem da API a partir do Dockerfile local
+* Buildar a imagem da API a partir do Dockerfile local
+* Iniciar containers para:
 
-Iniciar containers para:
+  * `postgres` (PostgreSQL)
+  * `redis` (Redis)
+  * `evolution_api` (sua API)
 
-postgres (PostgreSQL)
+## Verificar serviços
 
-redis (Redis)
+Para checar se está tudo funcionando:
 
-evolution_api (sua API)
-
-4. Verificar se está tudo rodando
-
-Status dos containers:
-
+```bash
 docker compose -f docker-compose.dev.yaml ps
+```
 
-Logs da API:
-
+```bash
 docker logs -f evolution_api
+```
 
-Verifique se não há erros de conexão ao Redis ou ao Postgres.
-
-Testar endpoint de health:
-
+```bash
 curl -i http://localhost:8080/health
+```
 
-Deve retornar 200 OK ou JSON indicando que a API está saudável.
+## Acessar o Manager UI
 
-5. Acessar o Manager UI
+Abra no navegador: `http://localhost:8080/manager`
 
-Abra no navegador:
+* **Server URL**: `http://localhost:8080`
+* **API Key Global**: cole o valor de `AUTHENTICATION_API_KEY`
 
-http://localhost:8080/manager
+Clique em **Instance +** para criar e conectar uma instância de WhatsApp.
 
-Insira em Server URL: http://localhost:8080
+## Enviar mensagem via API
 
-Parar e limpar tudo
+1. Liste instâncias para obter o `instanceId`:
 
-Para parar e remover containers, redes e volumes associados:
+   ```bash
+   curl -s http://localhost:8080/instances \
+     -H "x-api-key: $AUTHENTICATION_API_KEY" | jq
+   ```
+2. Formate o destino (ex.: `5511987654321@c.us`).
+3. Envie a mensagem:
 
+   ```bash
+   curl -X POST http://localhost:8080/instances/<INSTANCE_ID>/send-message \
+     -H "Content-Type: application/json" \
+     -H "x-api-key: $AUTHENTICATION_API_KEY" \
+     -d '{"to":"5511987654321@c.us","message":"Olá! Esta é uma mensagem de teste."}'
+   ```
+4. Verifique a resposta JSON com status `SENT`.
+5. (Opcional) Confira logs:
+
+   ```bash
+   ```
+
+docker logs -f evolution\_api
+
+````
+
+## Parar e limpar tudo
+
+```bash
 docker compose -f docker-compose.dev.yaml down --volumes --remove-orphans
+````
 
-7. Troubleshooting / Dicas
+## Troubleshooting
 
-Prisma: se der erro @prisma/client did not initialize, verifique se o Dockerfile roda prisma generate antes de iniciar ou inclua um script prestart no package.json.
-
-Redis disconnected: confira CACHE_REDIS_URI apontando para redis://redis:6379, não para localhost.
-
-Postgres permissions: use POSTGRES_HOST_AUTH_METHOD=trust no serviço Postgres para desenvolvimento.
-
-Atualize o AUTHENTICATION_API_KEY para uma string forte em produção.Em API Key Global, cole o valor de AUTHENTICATION_API_KEY do seu .env.
-
-Após o login, clique em Instance + para criar e conectar uma instância de WhatsApp.
-
-6. Parar e limpar tudo
-
-Para parar e remover containers, redes e volumes associados:
-
-docker compose -f docker-compose.dev.yaml down --volumes --remove-orphans
-
-7. Troubleshooting / Dicas
-
-Prisma: se der erro @prisma/client did not initialize, verifique se o Dockerfile roda prisma generate antes de iniciar ou inclua um script prestart no package.json.
-
-Redis disconnected: confira CACHE_REDIS_URI apontando para redis://redis:6379, não para localhost.
-
-Postgres permissions: use POSTGRES_HOST_AUTH_METHOD=trust no serviço Postgres para desenvolvimento.
-
-Atualize o AUTHENTICATION_API_KEY para uma string forte em produção.
-
+* Se aparecer erro `@prisma/client did not initialize`, garanta q
